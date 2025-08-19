@@ -1,14 +1,10 @@
-import { writeFileSync, mkdirSync, appendFileSync } from 'fs';
-import { dirname } from 'path';
+import { writeFileSync, mkdirSync, appendFileSync, existsSync, readFileSync } from 'fs';
+import { dirname, join } from 'path';
+import { homedir } from 'os';
 import { SecretEntry } from './types.js';
 
 export class SecretApplier {
-  private envFilePath: string;
   private envVarsWritten: string[] = [];
-
-  constructor(envFilePath: string = '.env.secrets') {
-    this.envFilePath = envFilePath;
-  }
 
   async applySecrets(secrets: SecretEntry[]): Promise<void> {
     for (const secret of secrets) {
@@ -20,12 +16,23 @@ export class SecretApplier {
     }
 
     if (this.envVarsWritten.length > 0) {
-      console.log(`\n📝 Environment variables written to ${this.envFilePath}`);
+      console.log(`\n📝 Environment variables added to shell profile files`);
+      console.log('Variables will be available in new shell sessions.');
       console.log('To load them in your current shell, run:');
-      console.log(`   source ${this.envFilePath}`);
-      console.log('Or for fish shell:');
-      console.log(`   bass source ${this.envFilePath}`);
+      console.log(`   source ~/.bashrc   # or source ~/.zshrc for zsh`);
     }
+  }
+
+  private getShellProfileFiles(): string[] {
+    const homeDir = homedir();
+    const profileFiles = [
+      join(homeDir, '.bashrc'),
+      join(homeDir, '.bash_profile'),
+      join(homeDir, '.zshrc'),
+      join(homeDir, '.profile')
+    ];
+
+    return profileFiles.filter(file => existsSync(file));
   }
 
   private async applyFileSecret(secret: SecretEntry): Promise<void> {
@@ -56,10 +63,30 @@ export class SecretApplier {
       const escapedValue = secret.value.replace(/'/g, "'\\''");
       const envLine = `export ${secret.variable}='${escapedValue}'\n`;
       
-      appendFileSync(this.envFilePath, envLine);
-      this.envVarsWritten.push(secret.variable);
+      const profileFiles = this.getShellProfileFiles();
       
-      console.log(`✓ Added environment variable ${secret.variable} to ${this.envFilePath}`);
+      if (profileFiles.length === 0) {
+        // Fallback: create .profile if no shell profile files exist
+        const profilePath = join(homedir(), '.profile');
+        appendFileSync(profilePath, envLine);
+        console.log(`✓ Added environment variable ${secret.variable} to ${profilePath}`);
+      } else {
+        // Add to all existing shell profile files
+        profileFiles.forEach(profileFile => {
+          // Check if the variable already exists in the file to avoid duplicates
+          const content = existsSync(profileFile) ? readFileSync(profileFile, 'utf-8') : '';
+          const variableExists = content.includes(`export ${secret.variable}=`);
+          
+          if (!variableExists) {
+            appendFileSync(profileFile, envLine);
+            console.log(`✓ Added environment variable ${secret.variable} to ${profileFile}`);
+          } else {
+            console.log(`ℹ Environment variable ${secret.variable} already exists in ${profileFile}`);
+          }
+        });
+      }
+      
+      this.envVarsWritten.push(secret.variable);
     } catch (error) {
       throw new Error(`Failed to write environment variable ${secret.variable}: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
