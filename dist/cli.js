@@ -11,6 +11,7 @@ program
     .command('pull')
     .description('Pull and apply secrets from AWS Secrets Manager')
     .option('-s, --secret-arn <arn>', 'ARN of the secret to pull (defaults to INSTANCE_SECRETS env var)')
+    .option('-o, --output <file>', 'Output file for environment variables (default: .env.secrets)')
     .action(async (options) => {
     try {
         const secretArn = options.secretArn || process.env.INSTANCE_SECRETS;
@@ -22,7 +23,7 @@ program
         const secretsManager = new SecretsManager();
         const secrets = await secretsManager.getSecrets(secretArn);
         console.log(`📦 Found ${secrets.length} secrets to apply`);
-        const applier = new SecretApplier();
+        const applier = new SecretApplier(options.output);
         await applier.applySecrets(secrets);
         console.log('✅ All secrets applied successfully!');
     }

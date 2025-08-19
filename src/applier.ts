@@ -1,8 +1,15 @@
-import { writeFileSync, mkdirSync } from 'fs';
+import { writeFileSync, mkdirSync, appendFileSync } from 'fs';
 import { dirname } from 'path';
 import { SecretEntry } from './types.js';
 
 export class SecretApplier {
+  private envFilePath: string;
+  private envVarsWritten: string[] = [];
+
+  constructor(envFilePath: string = '.env.secrets') {
+    this.envFilePath = envFilePath;
+  }
+
   async applySecrets(secrets: SecretEntry[]): Promise<void> {
     for (const secret of secrets) {
       if (secret.type === 'file') {
@@ -10,6 +17,14 @@ export class SecretApplier {
       } else if (secret.type === 'env') {
         await this.applyEnvSecret(secret);
       }
+    }
+
+    if (this.envVarsWritten.length > 0) {
+      console.log(`\n📝 Environment variables written to ${this.envFilePath}`);
+      console.log('To load them in your current shell, run:');
+      console.log(`   source ${this.envFilePath}`);
+      console.log('Or for fish shell:');
+      console.log(`   bass source ${this.envFilePath}`);
     }
   }
 
@@ -37,10 +52,16 @@ export class SecretApplier {
     }
 
     try {
-      process.env[secret.variable] = secret.value;
-      console.log(`✓ Set environment variable ${secret.variable}`);
+      // Escape the value for shell safety
+      const escapedValue = secret.value.replace(/'/g, "'\\''");
+      const envLine = `export ${secret.variable}='${escapedValue}'\n`;
+      
+      appendFileSync(this.envFilePath, envLine);
+      this.envVarsWritten.push(secret.variable);
+      
+      console.log(`✓ Added environment variable ${secret.variable} to ${this.envFilePath}`);
     } catch (error) {
-      throw new Error(`Failed to set environment variable ${secret.variable}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(`Failed to write environment variable ${secret.variable}: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 }
