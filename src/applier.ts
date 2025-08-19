@@ -79,7 +79,7 @@ export class SecretApplier {
           
           if (!variableExists) {
             appendFileSync(profileFile, envLine);
-            console.log(`✓ Added environment variable ${secret.variable} to ${profileFile}`);
+            console.log(`✓ Added environment variable ${secret.variable} to profile ${profileFile}`);
           } else {
             console.log(`ℹ Environment variable ${secret.variable} already exists in ${profileFile}`);
           }
