@@ -1,0 +1,29 @@
+{
+  "name": "cloud-env-secret-puller",
+  "version": "1.0.0",
+  "description": "CLI tool to pull secrets from AWS Secrets Manager and apply them to the system",
+  "main": "dist/cli.js",
+  "bin": {
+    "cloud-env-secret-puller": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["aws", "secrets-manager", "cli", "devops", "environment"],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@aws-sdk/client-secrets-manager": "^3.864.0",
+    "commander": "^14.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "typescript": "^5.9.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -1,0 +1,1 @@
+{"version":3,"file":"applier.d.ts","sourceRoot":"","sources":["../src/applier.ts"],"names":[],"mappings":"AAEA,OAAO,EAAE,WAAW,EAAE,MAAM,YAAY,CAAC;AAEzC,qBAAa,aAAa;IAClB,YAAY,CAAC,OAAO,EAAE,WAAW,EAAE,GAAG,OAAO,CAAC,IAAI,CAAC;YAU3C,eAAe;YAkBf,cAAc;CAY7B"}
