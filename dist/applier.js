@@ -72,7 +72,23 @@ export class SecretApplier {
                         console.log(`✓ Added environment variable ${secret.variable} to profile ${profileFile}`);
                     }
                     else {
-                        console.log(`ℹ Environment variable ${secret.variable} already exists in ${profileFile}`);
+                        // Replace existing definition with the new value (idempotent update)
+                        const varName = secret.variable; // non-null (checked earlier)
+                        const escapedVarName = varName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                        const lineRegex = new RegExp(`^export ${escapedVarName}=.*$`, 'gm');
+                        let newContent = content.replace(lineRegex, envLine.trim());
+                        if (!newContent.endsWith('\n')) {
+                            newContent += '\n';
+                        }
+                        // Only write if content actually changed to avoid touching timestamps needlessly
+                        if (newContent !== content) {
+                            writeFileSync(profileFile, newContent);
+                            console.log(`↻ Updated environment variable ${varName} in profile ${profileFile}`);
+                        }
+                        else {
+                            // Fallback log (should rarely happen unless value identical)
+                            console.log(`ℹ Environment variable ${varName} already up-to-date in ${profileFile}`);
+                        }
                     }
                 });
             }
