@@ -16,7 +16,7 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "@aws-sdk/client-secrets-manager": "^3.864.0",
+    "@aws-sdk/client-secrets-manager": "^3.987.0",
     "commander": "^14.0.0"
   },
   "devDependencies": {
